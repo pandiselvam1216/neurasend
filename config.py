@@ -4,11 +4,16 @@ from cryptography.fernet import Fernet
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or os.urandom(24)
     basedir = os.path.abspath(os.path.dirname(__file__))
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'database.db')
+    # Use /tmp for Vercel/Production or local instance folder for dev
+    if os.environ.get('VERCEL'):
+        SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/database.db'
+        UPLOAD_FOLDER = '/tmp/uploads'
+    else:
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'database.db')
+        UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Upload Folder
-    UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max upload size
     
     # Encryption key for sensitive data (Settings)
