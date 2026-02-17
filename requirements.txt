@@ -1,0 +1,6 @@
+Flask==3.0.0
+Pandas==2.1.4
+Cryptography==41.0.7
+python-dotenv==1.0.0
+SQLAlchemy==2.0.25
+Flask-SQLAlchemy==3.1.1

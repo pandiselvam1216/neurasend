@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Top Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Overview</h1>
+        <p class="text-sm text-gray-500 mt-1">Monitor your campaign performance</p>
+    </div>
+    <a href="{{ url_for('new_campaign') }}"
+        class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-blue-500/20">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        New Campaign
+    </a>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Stat Card 1 -->
+    <div
+        class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300 border-t-4 border-t-google-blue">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-500 text-sm font-semibold uppercase tracking-wider">Total Campaigns</h3>
+            <div class="p-2 bg-blue-50 text-google-blue rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                    </path>
+                </svg>
+            </div>
+        </div>
+        <div>
+            <span class="text-3xl font-bold text-gray-900">{{ campaigns|length }}</span>
+            <span class="text-gray-400 text-sm ml-2">All time</span>
+        </div>
+    </div>
+
+    <!-- Stat Card 2 -->
+    <div
+        class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300 border-t-4 border-t-google-green">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-500 text-sm font-semibold uppercase tracking-wider">Total Emails Sent</h3>
+            <div class="p-2 bg-emerald-50 text-google-green rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                    </path>
+                </svg>
+            </div>
+        </div>
+        <div>
+            <span class="text-3xl font-bold text-gray-900">{{ campaigns | sum(attribute='sent_count') }}</span>
+            <span class="text-google-green text-sm ml-2 font-medium">Delivered</span>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Campaigns Table -->
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+        <h2 class="text-lg font-semibold text-gray-800">Recent Campaigns</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead class="bg-gray-50 text-xs text-gray-500 uppercase font-semibold">
+                <tr>
+                    <th class="px-6 py-3 tracking-wider">ID</th>
+                    <th class="px-6 py-3 tracking-wider">Subject</th>
+                    <th class="px-6 py-3 tracking-wider">Created</th>
+                    <th class="px-6 py-3 tracking-wider w-1/4">Progress</th>
+                    <th class="px-6 py-3 tracking-wider">Status</th>
+                    <th class="px-6 py-3 tracking-wider text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-sm">
+                {% for campaign in campaigns %}
+                <tr class="hover:bg-gray-50/80 transition-colors group" id="campaign-row-{{ campaign.id }}">
+                    <td class="px-6 py-4 font-mono text-gray-400">#{{ campaign.id }}</td>
+                    <td class="px-6 py-4 font-medium text-gray-900">{{ campaign.subject }}</td>
+                    <td class="px-6 py-4 text-gray-500">{{ campaign.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                <div id="progress-bar-{{ campaign.id }}"
+                                    class="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
+                                    style="width: {{ (campaign.sent_count + campaign.failed_count) / campaign.total_emails * 100 if campaign.total_emails > 0 else 0 }}%">
+                                </div>
+                            </div>
+                            <span id="progress-text-{{ campaign.id }}"
+                                class="text-xs text-gray-500 font-medium tabular-nums">{{ campaign.sent_count }}/{{
+                                campaign.total_emails }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span id="status-badge-{{ campaign.id }}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if campaign.total_emails == 0 %} bg-gray-100 text-gray-800
+                            {% elif campaign.sent_count + campaign.failed_count >= campaign.total_emails %} bg-green-100 text-green-800
+                            {% else %} bg-yellow-100 text-yellow-800
+                            {% endif %}">
+                            {% if campaign.total_emails == 0 %} Draft
+                            {% elif campaign.sent_count + campaign.failed_count >= campaign.total_emails %} Completed
+                            {% else %} Sending...
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div id="action-area-{{ campaign.id }}">
+                            {% if campaign.sent_count == 0 and campaign.failed_count == 0 %}
+                            <form action="{{ url_for('send_campaign', campaign_id=campaign.id) }}" method="POST"
+                                class="inline">
+                                <button type="submit"
+                                    class="text-blue-600 hover:text-blue-800 font-medium hover:underline focus:outline-none">Start</button>
+                            </form>
+                            {% else %}
+                            <a href="{{ url_for('campaign_report', campaign_id=campaign.id) }}"
+                                class="text-blue-600 hover:text-blue-800 font-medium hover:underline">View Report</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-16 text-center text-gray-400">
+                        <div class="flex flex-col items-center justify-center">
+                            <svg class="w-12 h-12 text-gray-200 mb-2" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                                </path>
+                            </svg>
+                            <p>No campaigns found.</p>
+                            <a href="{{ url_for('new_campaign') }}"
+                                class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-1">Create your first
+                                one</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const campaigns = document.querySelectorAll('[id^="campaign-row-"]');
+
+        const updateCampaign = (campaignId) => {
+            fetch(`/campaign/${campaignId}/status`)
+                .then(response => response.json())
+                .then(data => {
+                    const progressBar = document.getElementById(`progress-bar-${campaignId}`);
+                    if (progressBar) {
+                        const width = (data.total > 0) ? ((data.sent + data.failed) / data.total * 100) : 0;
+                        progressBar.style.width = width + '%';
+                    }
+
+                    const progressText = document.getElementById(`progress-text-${campaignId}`);
+                    if (progressText) {
+                        progressText.innerText = `${data.sent}/${data.total}`;
+                    }
+
+                    const statusBadge = document.getElementById(`status-badge-${campaignId}`);
+                    const actionArea = document.getElementById(`action-area-${campaignId}`);
+
+                    if (statusBadge && actionArea) {
+                        if (data.status === 'completed') {
+                            if (!statusBadge.classList.contains('bg-green-100')) {
+                                statusBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
+                                statusBadge.innerText = 'Completed';
+                                actionArea.innerHTML = `<a href="/campaign/${campaignId}" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">View Report</a>`;
+                            }
+                        } else if (data.status === 'processing') {
+                            if (!statusBadge.classList.contains('bg-yellow-100')) {
+                                statusBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
+                                statusBadge.innerText = 'Sending...';
+                            }
+                            if (data.sent > 0 || data.failed > 0) {
+                                if (!actionArea.innerHTML.includes('Sending...')) {
+                                    actionArea.innerHTML = '<span class="text-gray-400">Sending...</span>';
+                                }
+                            }
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching status:', error));
+        };
+
+        campaigns.forEach(row => {
+            const campaignId = row.id.split('-')[2];
+            updateCampaign(campaignId);
+            setInterval(() => updateCampaign(campaignId), 2000);
+        });
+    });
+</script>
+{% endblock %}

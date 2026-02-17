@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neurasend - Premium Bulk Mailer</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#4285F4', // Google Blue
+                            600: '#3367D6',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                        google: {
+                            blue: '#4285F4',
+                            red: '#EA4335',
+                            yellow: '#FBBC05',
+                            green: '#34A853',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            /* Slate 50 */
+            color: #1e293b;
+            /* Slate 800 */
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .nav-link.active {
+            background-color: #eff6ff;
+            color: #4285F4;
+            border-right: 3px solid #4285F4;
+        }
+    </style>
+</head>
+
+<body class="antialiased font-sans flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+        class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col z-30 shadow-sm fixed md:static h-full transition-transform transform -translate-x-full md:translate-x-0">
+        <!-- Brand -->
+        <div class="h-16 flex items-center px-8 border-b border-gray-100 justify-between">
+            <div class="flex items-center gap-3">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Neurasend Logo" class="h-8 w-auto">
+                <span class="text-xl font-bold text-gray-900 tracking-tight">Neurasend</span>
+            </div>
+            <!-- Close Sidebar Button (Mobile) -->
+            <button id="closeSidebar" class="md:hidden text-gray-500 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            <a href="{{ url_for('dashboard') }}"
+                class="nav-link flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 group {{ 'active' if request.endpoint == 'dashboard' }}">
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 {{ 'text-blue-600' if request.endpoint == 'dashboard' }}"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                    </path>
+                </svg>
+                Dashboard
+            </a>
+            <a href="{{ url_for('new_campaign') }}"
+                class="nav-link flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 group {{ 'active' if request.endpoint == 'new_campaign' }}">
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 {{ 'text-blue-600' if request.endpoint == 'new_campaign' }}"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                New Campaign
+            </a>
+            <a href="{{ url_for('settings') }}"
+                class="nav-link flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 group {{ 'active' if request.endpoint == 'settings' }}">
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 {{ 'text-blue-600' if request.endpoint == 'settings' }}"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Settings
+            </a>
+        </nav>
+
+        <!-- Footer -->
+        <div class="px-8 py-4 border-t border-gray-100">
+            <p class="text-xs text-gray-400">© 2026 Neurasend</p>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile sidebar -->
+    <div id="sidebarOverlay"
+        class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden glass-panel backdrop-blur-sm transition-opacity opacity-0">
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 relative">
+
+        <!-- Mobile Header -->
+        <header
+            class="md:hidden flex items-center justify-between h-16 bg-white border-b border-gray-200 px-4 z-10 shrink-0">
+            <div class="flex items-center gap-3">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Neurasend Logo" class="h-8 w-auto">
+                <span class="text-xl font-bold text-gray-900">Neurasend</span>
+            </div>
+            <!-- Mobile Menu Button -->
+            <button id="openSidebar" class="text-gray-500 hover:text-gray-900 p-2 rounded-md hover:bg-gray-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
+                    </path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Content Scroll Area -->
+        <main class="flex-1 overflow-y-auto w-full p-4 md:p-8">
+            <div class="max-w-7xl mx-auto animate-fade-in pb-12">
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="mb-6 space-y-2 max-w-lg mx-auto md:max-w-none md:mx-0">
+                    {% for category, message in messages %}
+                    <div
+                        class="p-4 rounded-lg border shadow-sm flex justify-between items-center animate-slide-up {{ 'bg-green-50 border-green-200 text-green-700' if category == 'success' else 'bg-red-50 border-red-200 text-red-700' }}">
+                        <div class="flex items-center gap-2">
+                            {% if category == 'success' %}
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            {% else %}
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {% endif %}
+                            <span class="font-medium">{{ message }}</span>
+                        </div>
+                        <button onclick="this.parentElement.remove()"
+                            class="opacity-50 hover:opacity-100 transition-opacity">✕</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Mobile Sidebar Logic
+        const sidebar = document.getElementById('sidebar');
+        const openBtn = document.getElementById('openSidebar');
+        const closeBtn = document.getElementById('closeSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            const isHidden = sidebar.classList.contains('hidden');
+            if (isHidden) {
+                // Open
+                sidebar.classList.remove('hidden');
+                // Small timeout to allow display:block to apply before transition
+                setTimeout(() => {
+                    sidebar.classList.remove('-translate-x-full');
+                    overlay.classList.remove('hidden');
+                    setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                }, 10);
+            } else {
+                // Close
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => {
+                    sidebar.classList.add('hidden');
+                    overlay.classList.add('hidden');
+                }, 300); // Match transition duration
+            }
+        }
+
+        openBtn.addEventListener('click', toggleSidebar);
+        closeBtn.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        // Close on resize if moving to desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('hidden', '-translate-x-full');
+                overlay.classList.add('hidden', 'opacity-0');
+            } else {
+                sidebar.classList.add('hidden', '-translate-x-full');
+            }
+        });
+    </script>
+
+</body>
+
+</html>
