@@ -17,6 +17,10 @@ db.init_app(app)
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
+# Create tables on startup (Essential for Vercel/Serverless where persistence is ephemeral)
+with app.app_context():
+    db.create_all()
+
 def send_campaign_background(app, campaign_id):
     """Background task to send emails for a campaign."""
     with app.app_context():
