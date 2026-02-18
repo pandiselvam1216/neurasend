@@ -34,4 +34,10 @@ class EmailLog(db.Model):
     email = db.Column(db.String(120), nullable=False)
     status = db.Column(db.String(20), nullable=False) # 'success', 'failed'
     error_message = db.Column(db.Text, nullable=True)
+    merge_data = db.Column(db.JSON, nullable=True) # Stores personalization data (e.g. {'name': 'John'})
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Tracking
+    opened_at = db.Column(db.DateTime, nullable=True)
+    clicked_at = db.Column(db.DateTime, nullable=True)
+    links_clicked = db.Column(db.JSON, nullable=True) # Store list of clicked URLs

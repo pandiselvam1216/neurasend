@@ -1,6 +1,25 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- Custom Styles -->
+<style>
+    @keyframes progress-stripe {
+        0% {
+            background-position: 1rem 0;
+        }
+
+        100% {
+            background-position: 0 0;
+        }
+    }
+
+    .progress-bar-animated {
+        background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
+        background-size: 1rem 1rem;
+        animation: progress-stripe 1s linear infinite;
+    }
+</style>
+
 <!-- Top Header -->
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
     <div>
@@ -93,17 +112,35 @@
                                 campaign.total_emails }}</span>
                         </div>
                     </td>
-                    <td class="px-6 py-4">
-                        <span id="status-badge-{{ campaign.id }}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                            {% if campaign.total_emails == 0 %} bg-gray-100 text-gray-800
-                            {% elif campaign.sent_count + campaign.failed_count >= campaign.total_emails %} bg-green-100 text-green-800
-                            {% else %} bg-yellow-100 text-yellow-800
-                            {% endif %}">
-                            {% if campaign.total_emails == 0 %} Draft
-                            {% elif campaign.sent_count + campaign.failed_count >= campaign.total_emails %} Completed
-                            {% else %} Sending...
-                            {% endif %}
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if (campaign.sent_count + campaign.failed_count) >= campaign.total_emails %}
+                        <span
+                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Completed
                         </span>
+                        {% else %}
+                        <div class="w-full max-w-xs" id="progress-container-{{ campaign.id }}">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-blue-600 font-medium animate-pulse">Sending...</span>
+                                <span class="text-gray-500" id="progress-percentage-{{ campaign.id }}">
+                                    {{ ((campaign.sent_count + campaign.failed_count) / campaign.total_emails * 100) |
+                                    round | int }}%
+                                </span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                <div id="progress-bar-status-{{ campaign.id }}"
+                                    class="bg-blue-600 h-2.5 rounded-full transition-all duration-500 progress-bar-animated"
+                                    style="width: {{ ((campaign.sent_count + campaign.failed_count) / campaign.total_emails * 100) | round | int }}%">
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">
+                                <span id="sent-{{ campaign.id }}">{{ campaign.sent_count }}</span> sent,
+                                <span id="failed-{{ campaign.id }}">{{ campaign.failed_count }}</span> failed
+                            </p>
+                        </div>
+                        <!-- Hidden status span for script detection -->
+                        <span class="hidden status-indicator" data-id="{{ campaign.id }}">processing</span>
+                        {% endif %}
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div id="action-area-{{ campaign.id }}">
@@ -113,11 +150,12 @@
                                 <input type="hidden" name="sender_email">
                                 <input type="hidden" name="sender_password">
                                 <button type="submit"
-                                    class="text-blue-600 hover:text-blue-800 font-medium hover:underline focus:outline-none">Start</button>
+                                    class="text-blue-600 hover:text-blue-800 font-medium hover:underline focus:outline-none transition-colors duration-200">Start</button>
                             </form>
                             {% else %}
                             <a href="{{ url_for('campaign_report', campaign_id=campaign.id) }}"
-                                class="text-blue-600 hover:text-blue-800 font-medium hover:underline">View Report</a>
+                                class="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors duration-200">View
+                                Report</a>
                             {% endif %}
                         </div>
                     </td>
@@ -210,12 +248,46 @@
                 })
                 .catch(error => console.error('Error fetching status:', error));
         };
-
-        campaigns.forEach(row => {
-            const campaignId = row.id.split('-')[2];
-            updateCampaign(campaignId);
-            setInterval(() => updateCampaign(campaignId), 2000);
-        });
     });
+
+    function updateProgress() {
+        // Find all processing campaigns
+        document.querySelectorAll('.status-indicator').forEach(async el => {
+            const campaignId = el.getAttribute('data-id');
+            if (!campaignId) return;
+
+            try {
+                const response = await fetch(`/campaign/${campaignId}/status`);
+                const data = await response.json();
+
+                // Calculate percentage
+                const total = data.total;
+                const processed = data.sent + data.failed;
+                const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
+
+                // Update specific elements
+                const bar = document.getElementById(`progress-bar-status-${campaignId}`); // Changed to target the status bar
+                const text = document.getElementById(`progress-percentage-${campaignId}`); // Changed to target the percentage text
+                const sentText = document.getElementById(`sent-${campaignId}`);
+                const failedText = document.getElementById(`failed-${campaignId}`);
+
+                if (bar) bar.style.width = `${percent}%`;
+                if (text) text.innerText = `${percent}%`;
+                if (sentText) sentText.innerText = data.sent;
+                if (failedText) failedText.innerText = data.failed;
+
+                // Reload if completed to show "View Report" button and clean status
+                if (data.status === 'completed') {
+                    setTimeout(() => window.location.reload(), 1000);
+                }
+
+            } catch (e) {
+                console.error("Polling error:", e);
+            }
+        });
+    }
+
+    // Poll every 2 seconds
+    setInterval(updateProgress, 2000);
 </script>
 {% endblock %}

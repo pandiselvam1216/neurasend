@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">System Status</h1>
+    <p class="text-sm text-gray-500">Real-time overview of your application health.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <!-- Network Speed Card -->
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Network Latency</h3>
+            <span id="network-icon" class="h-2 w-2 rounded-full bg-gray-300"></span>
+        </div>
+        <div class="flex items-end gap-2">
+            <p id="network-speed" class="text-3xl font-bold text-gray-900">...</p>
+            <span class="text-sm text-gray-500 mb-1">ms</span>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">Round-trip time to server</p>
+    </div>
+
+    <!-- Database Status Card -->
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Database Connection</h3>
+            <span id="db-status-icon" class="h-2 w-2 rounded-full bg-yellow-400 animate-pulse"></span>
+        </div>
+        <div class="flex items-end gap-2">
+            <p id="db-status-text" class="text-3xl font-bold text-gray-900">Checking...</p>
+        </div>
+        <p id="db-type-text" class="text-sm text-gray-500 mt-1">...</p>
+    </div>
+
+    <!-- Database Storage Card -->
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Database Storage</h3>
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                </path>
+            </svg>
+        </div>
+        <div class="flex items-end gap-2">
+            <p id="db-size" class="text-3xl font-bold text-gray-900">...</p>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">Occupied space</p>
+    </div>
+
+</div>
+
+<div class="mt-8 text-center text-sm text-gray-400">
+    <p>Last updated: <span id="last-updated">-</span></p>
+    <button onclick="checkSystemStatus()" class="mt-2 text-blue-600 hover:text-blue-800 underline">Refresh Now</button>
+</div>
+
+<script>
+    async function checkSystemStatus() {
+        const networkSpeedEl = document.getElementById('network-speed');
+        const dbStatusEl = document.getElementById('db-status-text');
+        const dbTypeEl = document.getElementById('db-type-text');
+        const dbSizeEl = document.getElementById('db-size');
+        const dbIcon = document.getElementById('db-status-icon');
+        const netIcon = document.getElementById('network-icon');
+        const updatedEl = document.getElementById('last-updated');
+
+        // 1. Measure Network Latency
+        const start = performance.now();
+        try {
+            const response = await fetch('/api/system-status');
+            const end = performance.now();
+            const latency = Math.round(end - start);
+
+            // Update Network UI
+            networkSpeedEl.innerText = latency;
+            if (latency < 100) {
+                netIcon.className = "h-2 w-2 rounded-full bg-green-500";
+            } else if (latency < 300) {
+                netIcon.className = "h-2 w-2 rounded-full bg-yellow-500";
+            } else {
+                netIcon.className = "h-2 w-2 rounded-full bg-red-500";
+            }
+
+            // 2. Process DB Response
+            const data = await response.json();
+
+            dbStatusEl.innerText = data.database_status;
+            dbTypeEl.innerText = data.database_type;
+            dbSizeEl.innerText = data.database_size;
+
+            if (data.database_status === "Connected") {
+                dbIcon.className = "h-2 w-2 rounded-full bg-green-500";
+                dbStatusEl.classList.remove('text-red-600');
+                dbStatusEl.classList.add('text-green-600');
+            } else {
+                dbIcon.className = "h-2 w-2 rounded-full bg-red-500";
+                dbStatusEl.classList.add('text-red-600');
+            }
+
+        } catch (error) {
+            console.error(error);
+            networkSpeedEl.innerText = "Err";
+            dbStatusEl.innerText = "API Failed";
+            dbIcon.className = "h-2 w-2 rounded-full bg-red-500";
+        }
+
+        updatedEl.innerText = new Date().toLocaleTimeString();
+    }
+
+    // Run on load
+    checkSystemStatus();
+
+    // Auto-refresh every 10s
+    setInterval(checkSystemStatus, 10000);
+</script>
+{% endblock %}
