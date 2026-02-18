@@ -26,14 +26,15 @@
                     <!-- Email -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Gmail Address</label>
-                        <input type="email" name="email" required value="{{ settings.email if settings else '' }}"
+                        <input type="email" name="email" id="email" required
+                            value="{{ settings.email if settings else '' }}"
                             class="block w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500"
                             placeholder="yourname@gmail.com">
                     </div>
                     <!-- Password -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">App Password</label>
-                        <input type="password" name="password" required value="{{ '' }}"
+                        <input type="password" name="password" id="password" required value="{{ '' }}"
                             class="block w-full p-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500"
                             placeholder="•••• •••• •••• ••••">
                     </div>
@@ -42,6 +43,32 @@
                         Configuration</button>
                     <p class="text-xs text-gray-400 text-center">Data encrypted & stored locally.</p>
                 </form>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        // 1. Populate form from LocalStorage if available (persistence across reloads)
+                        const savedEmail = localStorage.getItem('neurasend_email');
+                        const savedPassword = localStorage.getItem('neurasend_password');
+
+                        // Only populate if server didn't already provide values (server has precedence if DB is working)
+                        const emailInput = document.getElementById('email');
+                        const passwordInput = document.getElementById('password');
+
+                        if (savedEmail && !emailInput.value) emailInput.value = savedEmail;
+                        if (savedPassword) passwordInput.value = savedPassword;
+
+                        // 2. Save to LocalStorage on Submit
+                        document.querySelector('form').addEventListener('submit', function (e) {
+                            const email = emailInput.value;
+                            const password = passwordInput.value;
+
+                            localStorage.setItem('neurasend_email', email);
+                            localStorage.setItem('neurasend_password', password);
+
+                            console.log("Settings saved to LocalStorage");
+                        });
+                    });
+                </script>
             </div>
 
             <!-- Danger Zone -->
