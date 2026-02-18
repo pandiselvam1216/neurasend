@@ -153,8 +153,18 @@
                 const email = localStorage.getItem('neurasend_email');
                 const password = localStorage.getItem('neurasend_password');
 
-                if (email) this.querySelector('input[name="sender_email"]').value = email;
-                if (password) this.querySelector('input[name="sender_password"]').value = password;
+                if (!email || !password) {
+                    e.preventDefault();
+                    alert('Configuration missing! Please go to Settings and save your Gmail/App Password again.');
+                    window.location.href = '/settings';
+                    return;
+                }
+
+                this.querySelector('input[name="sender_email"]').value = email;
+                this.querySelector('input[name="sender_password"]').value = password;
+
+                // Debug log (optional, remove later)
+                console.log("Credentials injected:", email);
             });
         });
 
