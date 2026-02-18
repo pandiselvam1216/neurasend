@@ -109,7 +109,9 @@
                         <div id="action-area-{{ campaign.id }}">
                             {% if campaign.sent_count == 0 and campaign.failed_count == 0 %}
                             <form action="{{ url_for('send_campaign', campaign_id=campaign.id) }}" method="POST"
-                                class="inline">
+                                class="inline send-campaign-form">
+                                <input type="hidden" name="sender_email">
+                                <input type="hidden" name="sender_password">
                                 <button type="submit"
                                     class="text-blue-600 hover:text-blue-800 font-medium hover:underline focus:outline-none">Start</button>
                             </form>
@@ -145,6 +147,17 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Inject credentials into send forms
+        document.querySelectorAll('.send-campaign-form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                const email = localStorage.getItem('neurasend_email');
+                const password = localStorage.getItem('neurasend_password');
+
+                if (email) this.querySelector('input[name="sender_email"]').value = email;
+                if (password) this.querySelector('input[name="sender_password"]').value = password;
+            });
+        });
+
         const campaigns = document.querySelectorAll('[id^="campaign-row-"]');
 
         const updateCampaign = (campaignId) => {

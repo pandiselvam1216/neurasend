@@ -21,21 +21,25 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 with app.app_context():
     db.create_all()
 
-def send_campaign_background(app, campaign_id):
+def send_campaign_background(app, campaign_id, sender_email=None, sender_password=None):
     """Background task to send emails for a campaign."""
     with app.app_context():
         campaign = Campaign.query.get(campaign_id)
-        settings = Settings.query.first()
         
-        if not campaign or not settings:
-            print(f"Campaign {campaign_id} or Settings not found.")
-            return
-
-        sender_email = settings.email
-        try:
-            sender_password = decrypt_password(settings.encrypted_password)
-        except Exception as e:
-            print(f"Decryption failed: {e}")
+        # Resolve Credentials (Explicit > DB)
+        if not sender_email or not sender_password:
+            settings = Settings.query.first()
+            if settings:
+                sender_email = sender_email or settings.email
+                try:
+                    if not sender_password:
+                        sender_password = decrypt_password(settings.encrypted_password)
+                except Exception as e:
+                    print(f"Decryption failed: {e}")
+                    return
+        
+        if not campaign or not sender_email or not sender_password:
+            print(f"Campaign {campaign_id} missing or Credentials missing.")
             return
 
         pending_emails = EmailLog.query.filter_by(campaign_id=campaign_id, status='pending').all()
@@ -172,11 +176,22 @@ def new_campaign():
 
 @app.route('/campaign/<int:campaign_id>/send', methods=['POST'])
 def send_campaign(campaign_id):
-    if not Settings.query.first():
-        flash('Please configure settings first!', 'error')
-        return redirect(url_for('settings'))
-        
-    thread = threading.Thread(target=send_campaign_background, args=(current_app._get_current_object(), campaign_id))
+    # Try to get credentials from the request (Stateless/LocalStorage support)
+    sender_email = request.form.get('sender_email')
+    sender_password = request.form.get('sender_password')
+
+    # Fallback to DB if not provided
+    if not sender_email or not sender_password:
+        settings = Settings.query.first()
+        if not settings:
+            flash('Please configure settings first!', 'error')
+            return redirect(url_for('settings'))
+    
+    # Pass credentials to background task
+    thread = threading.Thread(
+        target=send_campaign_background, 
+        args=(current_app._get_current_object(), campaign_id, sender_email, sender_password)
+    )
     thread.start()
     
     flash('Campaign started! Emails are being sent in the background.', 'success')
